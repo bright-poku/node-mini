@@ -1,29 +1,48 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const { randomBytes } = require('crypto');
+const express = require("express");
+const bodyParser = require("body-parser");
+const { randomBytes } = require("crypto");
+const cors = require("cors");
+const axios = require("axios");
+const morgan = require("morgan");
 
 const app = express();
-app.use(bodyParser.json()); //parse json requests
+app.use(bodyParser.json());
+app.use(cors());
+app.use(morgan('dev'));
 
 const posts = {};
 
-// route
-app.get('/posts', (req, res) => {
+app.get("/posts", (req, res) => {
     res.send(posts);
 });
 
-// route
-app.post('/posts', (req, res) => {
-//    generate an id when a post is created
-    const id = randomBytes(4).toString('hex');
+app.post("/posts/create", async (req, res) => {
+    const id = randomBytes(4).toString("hex");
     const { title } = req.body;
 
-    posts[id] = { id, title};
+    posts[id] = {
+        id,
+        title,
+    };
 
-    // send success post creation and send back id
+    // push posts created events to the events bus
+    await axios.post("http://event-bus-srv:4005/events", {
+        type: "PostCreated",
+        data: {
+            id,
+            title,
+        },
+    });
+
     res.status(201).send(posts[id]);
 });
 
+app.post("/events", (req, res) => {
+    console.log("Received Event", req.body.type);
+
+    res.send({});
+});
+
 app.listen(4000, () => {
-    console.log('listening on 4000');
-})
+    console.log("Listening on 4000");
+});
