@@ -20,7 +20,7 @@ spec:
               servicePort: 4002
           - path: /posts/?(.*)/comments
             backend:
-              serviceName: comment-clusterip-srv
+              serviceName: comments-clusterip-srv
               servicePort: 4001
           - path: /?(.*)
             backend:
